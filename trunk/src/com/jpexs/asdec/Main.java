@@ -59,7 +59,7 @@ public class Main {
     public static final String version = "beta1";
     public static String applicationName = "JP ActionScript Decompiler v." + version;
     public static String shortApplicationName = "JPAD v."+version;
-    public static LoadingDialog loadingDialog = new LoadingDialog();
+    public static LoadingDialog loadingDialog;
     public static ModeFrame modeFrame;
     private static boolean working = false;
     private static TrayIcon trayIcon;
@@ -79,6 +79,8 @@ public class Main {
     public static final boolean RESOLVE_CONSTANTS = true;
     /** Turn off decompiling if needed */
     public static final boolean DO_DECOMPILE=true;
+    /** Find latest constant pool in the code */
+    public static final boolean LATEST_CONSTANTPOOL_HACK=false;
     /** Dump tags to stdout */
     public static boolean dump_tags = false;
 
@@ -267,6 +269,10 @@ public class Main {
         if (actionMainFrame != null)
             actionMainFrame.setVisible(false);
         Main.file = swfFile;
+        if(Main.loadingDialog == null)
+        {
+            Main.loadingDialog=new LoadingDialog();
+        }
         Main.loadingDialog.setVisible(true);
         (new OpenFileWorker()).execute();
         return true;
