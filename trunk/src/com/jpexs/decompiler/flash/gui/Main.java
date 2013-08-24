@@ -208,16 +208,12 @@ public class Main {
     }
 
     public static SWF parseSWF(String file) throws Exception {
-        try (FileInputStream fis = new FileInputStream(file)) {
-            return parseSWF(fis);
-        }
+        return parseSWF(new FileInputStream(file));
     }
 
     public static SWF parseSWF(InputStream fis) throws Exception {
         SWF locswf;
-        //try (FileInputStream fis = new FileInputStream(file)) {
-        InputStream bis = new BufferedInputStream(fis);
-        locswf = new SWF(bis, new ProgressListener() {
+        locswf = new SWF(fis, new ProgressListener() {
             @Override
             public void progress(int p) {
                 startWork(translate("work.reading.swf"), p);
@@ -269,6 +265,9 @@ public class Main {
             try {
                 Main.startWork(translate("work.reading.swf") + "...");
                 swf = parseSWF(Main.inputStream);
+                if (Main.inputStream instanceof FileInputStream) {
+                    Main.inputStream.close();
+                }
             } catch (Exception ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 View.showMessageDialog(null, "Cannot load SWF file.");
@@ -305,6 +304,30 @@ public class Main {
         }
     }
 
+    public static boolean reloadSWF() {
+        if (Main.inputStream == null) {
+            mainFrame.setVisible(false);
+            Helper.emptyObject(mainFrame);
+            Cache.clearAll();
+            System.gc();
+            mainFrame = null;
+            showModeFrame();
+            return true;
+        } else {
+            if (inputStream instanceof FileInputStream) {
+                openFile(file);
+            } else if (inputStream instanceof BufferedInputStream) {
+                try {
+                    ((BufferedInputStream) inputStream).reset();
+                } catch (IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return openFile(fileTitle, inputStream);
+            }
+            return false;
+        }
+    }
+
     public static void reloadApp() {
         if (loadingDialog != null) {
             loadingDialog.setVisible(false);
@@ -314,28 +337,22 @@ public class Main {
             proxyFrame.setVisible(false);
             proxyFrame = null;
         }
-        if (Main.file == null) {
-            mainFrame.setVisible(false);
-            Helper.emptyObject(mainFrame);
-            Cache.clearAll();
-            System.gc();
-            mainFrame = null;
-            showModeFrame();
-        } else {
-            openFile(Main.file);
+        if (loadFromMemoryFrame != null) {
+            loadFromMemoryFrame.setVisible(false);
+            loadFromMemoryFrame = null;
         }
+        reloadSWF();
     }
 
     public static boolean openFile(String swfFile) {
-
-        try (FileInputStream fis = new FileInputStream(swfFile)) {
-            boolean ok = openFile(swfFile, fis);
+        try {
+            boolean ok = openFile(swfFile, new FileInputStream(swfFile));
             if (ok) {
                 readOnly = false;
             }
             return ok;
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(null, "Cannot open file", "Error", JOptionPane.ERROR_MESSAGE);
+            View.showMessageDialog(null, "Cannot open file", "Error", JOptionPane.ERROR_MESSAGE);
         }
         return false;
     }
@@ -684,6 +701,14 @@ public class Main {
         UIManager.put("FileChooser.fileSizeMegaBytes", AppStrings.translate("FileChooser.fileSizeMegaBytes"));
         UIManager.put("FileChooser.fileSizeGigaBytes", AppStrings.translate("FileChooser.fileSizeGigaBytes"));
         UIManager.put("FileChooser.folderNameLabelText", AppStrings.translate("FileChooser.folderNameLabelText"));
+
+        UIManager.put("ColorChooser.okText", AppStrings.translate("ColorChooser.okText"));
+        UIManager.put("ColorChooser.cancelText", AppStrings.translate("ColorChooser.cancelText"));
+        UIManager.put("ColorChooser.resetText", AppStrings.translate("ColorChooser.resetText"));
+        UIManager.put("ColorChooser.previewText", AppStrings.translate("ColorChooser.previewText"));
+        UIManager.put("ColorChooser.swatchesNameText", AppStrings.translate("ColorChooser.swatchesNameText"));
+        UIManager.put("ColorChooser.swatchesRecentText", AppStrings.translate("ColorChooser.swatchesRecentText"));
+        UIManager.put("ColorChooser.sampleText", AppStrings.translate("ColorChooser.sampleText"));
     }
 
     /**
@@ -1244,22 +1269,44 @@ public class Main {
         Configuration.setConfig("lastUpdatesCheckDate", Calendar.getInstance());
         return false;
     }
+    private static FileHandler fileTxt;
+
+    public static void clearLogFile() {
+        Logger logger = Logger.getLogger("");
+        if (fileTxt != null) {
+            fileTxt.flush();
+            fileTxt.close();
+            logger.removeHandler(fileTxt);
+        }
+        try {
+            File f = new File(getFFDecHome() + File.separator + "log.txt");
+            FileOutputStream fos = new FileOutputStream(f);
+            fos.close();
+        } catch (IOException ex) {
+        }
+        try {
+            fileTxt = new FileHandler(getFFDecHome() + File.separator + "log.txt");
+        } catch (IOException | SecurityException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        SimpleFormatter formatterTxt = new SimpleFormatter();
+        fileTxt.setFormatter(formatterTxt);
+        logger.addHandler(fileTxt);
+
+    }
 
     public static void initLogging(boolean debug) {
         try {
             Logger logger = Logger.getLogger("");
             logger.setLevel(debug ? Level.CONFIG : Level.WARNING);
-            FileHandler fileTxt = new FileHandler(getFFDecHome() + File.separator + "log.txt");
-
-            SimpleFormatter formatterTxt = new SimpleFormatter();
-            fileTxt.setFormatter(formatterTxt);
-            logger.addHandler(fileTxt);
-
             if (debug) {
                 ConsoleHandler conHan = new ConsoleHandler();
+                SimpleFormatter formatterTxt = new SimpleFormatter();
                 conHan.setFormatter(formatterTxt);
                 logger.addHandler(conHan);
             }
+            clearLogFile();
 
         } catch (Exception ex) {
             throw new RuntimeException("Problems with creating the log files");

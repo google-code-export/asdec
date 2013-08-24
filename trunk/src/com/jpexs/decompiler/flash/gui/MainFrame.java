@@ -158,6 +158,7 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -376,14 +377,17 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
         assignListener(openCommandButton, "OPEN");
         saveCommandButton = new JCommandButton(fixCommandTitle(translate("menu.file.save")), View.getResizableIcon("save32"));
         assignListener(saveCommandButton, "SAVE");
-        JCommandButton saveasCommandButton = new JCommandButton(fixCommandTitle(translate("menu.file.saveas")), View.getResizableIcon("saveas32"));
+        JCommandButton saveasCommandButton = new JCommandButton(fixCommandTitle(translate("menu.file.saveas")), View.getResizableIcon("saveas16"));
         assignListener(saveasCommandButton, "SAVEAS");
 
+        JCommandButton reloadCommandButton = new JCommandButton(fixCommandTitle(translate("menu.file.reload")), View.getResizableIcon("reload16"));
+        assignListener(reloadCommandButton, "RELOAD");
 
 
         editBand.addCommandButton(openCommandButton, RibbonElementPriority.TOP);
         editBand.addCommandButton(saveCommandButton, RibbonElementPriority.TOP);
-        editBand.addCommandButton(saveasCommandButton, RibbonElementPriority.TOP);
+        editBand.addCommandButton(saveasCommandButton, RibbonElementPriority.MEDIUM);
+        editBand.addCommandButton(reloadCommandButton, RibbonElementPriority.MEDIUM);
         saveCommandButton.setEnabled(!Main.readOnly);
 
         JRibbonBand exportBand = new JRibbonBand(translate("menu.export"), null);
@@ -827,6 +831,7 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
             exportSelMenu.setEnabled(false);
             deobfuscationCommandButton.setEnabled(false);
             searchCommandButton.setEnabled(false);
+            reloadCommandButton.setEnabled(false);
         }
 
         UIManager.getDefaults().put("TreeUI", BasicTreeUI.class.getName());
@@ -1235,6 +1240,17 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
         //paramsLabel.setBorder(new BevelBorder(BevelBorder.RAISED));
         pan.add(prevLabel, BorderLayout.NORTH);
         pan.add(leftComponent, BorderLayout.CENTER);
+        if (flashPanel != null) {
+            JPanel bottomPanel = new JPanel(new BorderLayout());
+            JPanel buttonsPanel = new JPanel(new FlowLayout());
+            JButton selectColorButton = new JButton(View.getIcon("color16"));
+            selectColorButton.addActionListener(this);
+            selectColorButton.setActionCommand("SELECTCOLOR");
+            selectColorButton.setToolTipText(AppStrings.translate("button.selectcolor.hint"));
+            buttonsPanel.add(selectColorButton);
+            bottomPanel.add(buttonsPanel, BorderLayout.EAST);
+            pan.add(bottomPanel, BorderLayout.SOUTH);
+        }
         previewSplitPane.setLeftComponent(pan);
 
         parametersPanel = new JPanel(new BorderLayout());
@@ -1274,6 +1290,16 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
         shapesCard.add(previewPanel, BorderLayout.CENTER);
         displayPanel.add(shapesCard, CARDDRAWPREVIEWPANEL);
 
+        Color backgroundColor = Color.white;
+        if (swf != null) {
+            for (Tag t : swf.tags) {
+                if (t instanceof SetBackgroundColorTag) {
+                    backgroundColor = ((SetBackgroundColorTag) t).backgroundColor.toColor();
+                    break;
+                }
+            }
+        }
+        View.swfBackgroundColor = backgroundColor;
         swfPreviewPanel = new SWFPreviwPanel();
         displayPanel.add(swfPreviewPanel, CARDSWFPREVIEWPANEL);
 
@@ -2193,6 +2219,18 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
     @Override
     public void actionPerformed(ActionEvent e) {
         switch (e.getActionCommand()) {
+            case "SELECTCOLOR":
+                Color newColor = JColorChooser.showDialog(null, AppStrings.translate("dialog.selectcolor.title"), View.swfBackgroundColor);
+                if (newColor != null) {
+                    View.swfBackgroundColor = newColor;
+                    reload(true);
+                }
+                break;
+            case "RELOAD":
+                if (View.showConfirmDialog(null, translate("message.confirm.reload"), translate("message.warning"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+                    Main.reloadSWF();
+                }
+                break;
             case "LOADMEMORY":
                 Main.loadFromMemory();
                 break;
@@ -2936,7 +2974,7 @@ public class MainFrame extends AppRibbonFrame implements ActionListener, TreeSel
                     sos2.writeUI8(0);
                     sos2.writeUI8(swf.frameRate);
                     sos2.writeUI16(100); //framecnt
-                    sos2.writeTag(new SetBackgroundColorTag(null, new RGB(255, 255, 255)));
+                    sos2.writeTag(new SetBackgroundColorTag(null, new RGB(View.swfBackgroundColor)));
 
                     if (tagObj instanceof FrameNode) {
                         FrameNode fn = (FrameNode) tagObj;
