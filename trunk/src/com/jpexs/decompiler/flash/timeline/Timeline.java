@@ -25,6 +25,7 @@ import com.jpexs.decompiler.flash.tags.base.RemoveTag;
 import com.jpexs.decompiler.flash.types.CLIPACTIONS;
 import com.jpexs.decompiler.flash.types.CXFORM;
 import com.jpexs.decompiler.flash.types.CXFORMWITHALPHA;
+import com.jpexs.decompiler.flash.types.ColorTransform;
 import com.jpexs.decompiler.flash.types.MATRIX;
 import com.jpexs.decompiler.flash.types.filters.FILTER;
 import java.util.ArrayList;
@@ -80,15 +81,11 @@ public class Timeline {
                     if (instanceName2 != null) {
                         fl.instanceName = instanceName2;
                     }
-                    CXFORM colorTransForm2 = po.getColorTransform();
+                    ColorTransform colorTransForm2 = po.getColorTransform();
                     if (colorTransForm2 != null) {
                         fl.colorTransForm = colorTransForm2;
                     }
 
-                    CXFORMWITHALPHA colorTransFormAlpha2 = po.getColorTransformWithAlpha();
-                    if (colorTransFormAlpha2 != null) {
-                        fl.colorTransFormAlpha = colorTransFormAlpha2;
-                    }
 
                     CLIPACTIONS clipActions2 = po.getClipActions();
                     if (clipActions2 != null) {
@@ -113,7 +110,6 @@ public class Timeline {
                     fl.matrix = po.getMatrix();
                     fl.instanceName = po.getInstanceName();
                     fl.colorTransForm = po.getColorTransform();
-                    fl.colorTransFormAlpha = po.getColorTransformWithAlpha();
                     fl.cacheAsBitmap = po.cacheAsBitmap();
                     fl.blendMode = po.getBlendMode();
                     fl.filters = po.getFilters();
