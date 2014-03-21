@@ -1,0 +1,76 @@
+/*
+ *  Copyright (C) 2010-2014 JPEXS
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.jpexs.decompiler.flash.abc.avm2.model;
+
+import com.jpexs.decompiler.flash.abc.avm2.instructions.AVM2Instruction;
+import com.jpexs.decompiler.flash.ecma.Null;
+import com.jpexs.decompiler.flash.ecma.Undefined;
+import com.jpexs.decompiler.flash.helpers.GraphTextWriter;
+import com.jpexs.decompiler.graph.GraphTargetItem;
+import com.jpexs.decompiler.graph.model.LocalData;
+import java.util.Set;
+
+public class CoerceAVM2Item extends AVM2Item {
+
+    //public GraphTargetItem value;
+    public String type;
+
+    public CoerceAVM2Item(AVM2Instruction instruction, GraphTargetItem value, String type) {
+        super(instruction, NOPRECEDENCE);
+        this.value = value;
+        this.type = type;
+    }
+
+    @Override
+    public GraphTextWriter appendTo(GraphTextWriter writer, LocalData localData) throws InterruptedException {
+        //return hilight("("+type+")", highlight)+
+        return value.toString(writer, localData);
+    }
+
+    @Override
+    public GraphTargetItem getNotCoerced() {
+        return value.getNotCoerced();
+    }
+
+    @Override
+    public boolean isCompileTime(Set<GraphTargetItem> dependencies) {
+        if (dependencies.contains(value)) {
+            return false;
+        }
+        dependencies.add(value);
+        return value.isCompileTime(dependencies);
+    }
+
+    @Override
+    public Object getResult() {
+        Object ret = value.getResult();
+        switch (type) {
+            case "String":
+                if (ret instanceof Null) {
+                    return ret;
+                }
+                if (ret instanceof Undefined) {
+                    return new Null();
+                }
+                return ret.toString();
+            case "*":
+                break;
+        }
+        return ret;
+
+    }
+}
