@@ -18,7 +18,6 @@ package com.jpexs.decompiler.flash.abc.avm2.model.operations;
 
 import com.jpexs.decompiler.flash.abc.avm2.instructions.AVM2Instruction;
 import com.jpexs.decompiler.flash.abc.avm2.model.AVM2Item;
-import com.jpexs.decompiler.flash.abc.avm2.model.FullMultinameAVM2Item;
 import com.jpexs.decompiler.flash.helpers.GraphTextWriter;
 import com.jpexs.decompiler.graph.GraphTargetItem;
 import com.jpexs.decompiler.graph.model.LocalData;
@@ -26,9 +25,9 @@ import com.jpexs.decompiler.graph.model.LocalData;
 public class DeletePropertyAVM2Item extends AVM2Item {
 
     public GraphTargetItem object;
-    public FullMultinameAVM2Item propertyName;
+    public GraphTargetItem propertyName;
 
-    public DeletePropertyAVM2Item(AVM2Instruction instruction, GraphTargetItem object, FullMultinameAVM2Item propertyName) {
+    public DeletePropertyAVM2Item(AVM2Instruction instruction, GraphTargetItem object, GraphTargetItem propertyName) {
         super(instruction, PRECEDENCE_UNARY);
         this.object = object;
         this.propertyName = propertyName;

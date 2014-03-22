@@ -188,6 +188,7 @@ import com.jpexs.decompiler.flash.abc.avm2.instructions.xml.DXNSLateIns;
 import com.jpexs.decompiler.flash.abc.avm2.instructions.xml.EscXAttrIns;
 import com.jpexs.decompiler.flash.abc.avm2.instructions.xml.EscXElemIns;
 import com.jpexs.decompiler.flash.abc.avm2.model.BooleanAVM2Item;
+import com.jpexs.decompiler.flash.abc.avm2.model.FullMultinameAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.HasNextAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.InitPropertyAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.LocalRegAVM2Item;
@@ -199,8 +200,8 @@ import com.jpexs.decompiler.flash.abc.avm2.model.SetPropertyAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.SetSlotAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.WithAVM2Item;
 import com.jpexs.decompiler.flash.abc.avm2.model.clauses.DeclarationAVM2Item;
-import com.jpexs.decompiler.flash.abc.avm2.parser.ASM3Parser;
 import com.jpexs.decompiler.flash.abc.avm2.parser.ParseException;
+import com.jpexs.decompiler.flash.abc.avm2.parser.pcode.ASM3Parser;
 import com.jpexs.decompiler.flash.abc.types.ABCException;
 import com.jpexs.decompiler.flash.abc.types.MethodBody;
 import com.jpexs.decompiler.flash.abc.types.MethodInfo;
@@ -249,7 +250,7 @@ public class AVM2Code implements Serializable {
     public static final long serialVersionUID = 1L;
     private static final boolean DEBUG_MODE = false;
     public static int toSourceLimit = -1;
-    public ArrayList<AVM2Instruction> code = new ArrayList<>();
+    public List<AVM2Instruction> code = new ArrayList<>();
     public static boolean DEBUG_REWRITE = false;
     public static final int OPT_U30 = 0x100;
     public static final int OPT_U8 = 0x200;
@@ -828,7 +829,9 @@ public class AVM2Code implements Serializable {
     }
 
     public void compact() {
-        code.trimToSize();
+        if (code instanceof ArrayList) {
+            ((ArrayList) code).trimToSize();
+        }
     }
 
     public byte[] getBytes() {
@@ -1244,7 +1247,7 @@ public class AVM2Code implements Serializable {
         return pos2adr(fixIPAfterDebugLine(adr2pos(addr)));
     }
 
-    public ConvertOutput toSourceOutput(String path, GraphPart part, boolean processJumps, boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, Stack<GraphTargetItem> scopeStack, ABC abc, ConstantPool constants, MethodInfo[] method_info, MethodBody body, int start, int end, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, boolean[] visited, HashMap<Integer, Integer> localRegAssigmentIps, HashMap<Integer, List<Integer>> refs) throws ConvertException, InterruptedException {
+    public ConvertOutput toSourceOutput(String path, GraphPart part, boolean processJumps, boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, Stack<GraphTargetItem> scopeStack, ABC abc, ConstantPool constants, List<MethodInfo> method_info, MethodBody body, int start, int end, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, boolean[] visited, HashMap<Integer, Integer> localRegAssigmentIps, HashMap<Integer, List<Integer>> refs) throws ConvertException, InterruptedException {
         boolean debugMode = DEBUG_MODE;
         if (debugMode) {
             System.out.println("OPEN SubSource:" + start + "-" + end + " " + code.get(start).toString() + " to " + code.get(end).toString());
@@ -1560,7 +1563,7 @@ public class AVM2Code implements Serializable {
         ignoredIns = new ArrayList<>();
     }
 
-    public List<GraphTargetItem> toGraphTargetItems(String path, boolean isStatic, int scriptIndex, int classIndex, ABC abc, ConstantPool constants, MethodInfo[] method_info, MethodBody body, HashMap<Integer, String> localRegNames, Stack<GraphTargetItem> scopeStack, boolean isStaticInitializer, List<String> fullyQualifiedNames, Traits initTraits, int staticOperation, HashMap<Integer, Integer> localRegAssigmentIps, HashMap<Integer, List<Integer>> refs) throws InterruptedException {
+    public List<GraphTargetItem> toGraphTargetItems(String path, boolean isStatic, int scriptIndex, int classIndex, ABC abc, ConstantPool constants, List<MethodInfo> method_info, MethodBody body, HashMap<Integer, String> localRegNames, Stack<GraphTargetItem> scopeStack, boolean isStaticInitializer, List<String> fullyQualifiedNames, Traits initTraits, int staticOperation, HashMap<Integer, Integer> localRegAssigmentIps, HashMap<Integer, List<Integer>> refs) throws InterruptedException {
         initToSource();
         List<GraphTargetItem> list;
         HashMap<Integer, GraphTargetItem> localRegs = new HashMap<>();
@@ -1581,7 +1584,7 @@ public class AVM2Code implements Serializable {
                         value = ((InitPropertyAVM2Item) ti).value;
                     }
                     if (ti instanceof SetPropertyAVM2Item) {
-                        multinameIndex = ((SetPropertyAVM2Item) ti).propertyName.multinameIndex;
+                        multinameIndex = ((FullMultinameAVM2Item) ((SetPropertyAVM2Item) ti).propertyName).multinameIndex;
                         value = ((SetPropertyAVM2Item) ti).value;
                     }
                     for (Trait t : initTraits.traits) {
@@ -1639,10 +1642,10 @@ public class AVM2Code implements Serializable {
                 Slot sl = new Slot(ssti.scope, ssti.slotName);
                 if (!declaredSlots.contains(sl)) {
                     String type = "*";
-                    for (int t = 0; t < body.traits.traits.length; t++) {
-                        if (body.traits.traits[t].getName(abc) == sl.multiname) {
-                            if (body.traits.traits[t] instanceof TraitSlotConst) {
-                                type = ((TraitSlotConst) body.traits.traits[t]).getType(constants, fullyQualifiedNames);
+                    for (int t = 0; t < body.traits.traits.size(); t++) {
+                        if (body.traits.traits.get(t).getName(abc) == sl.multiname) {
+                            if (body.traits.traits.get(t) instanceof TraitSlotConst) {
+                                type = ((TraitSlotConst) body.traits.traits.get(t)).getType(constants, fullyQualifiedNames);
                             }
                         }
                     }
