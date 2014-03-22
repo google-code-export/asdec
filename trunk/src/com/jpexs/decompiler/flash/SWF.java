@@ -55,7 +55,6 @@ import com.jpexs.decompiler.flash.ecma.Null;
 import com.jpexs.decompiler.flash.exporters.ExportRectangle;
 import com.jpexs.decompiler.flash.exporters.Matrix;
 import com.jpexs.decompiler.flash.exporters.PathExporter;
-import com.jpexs.decompiler.flash.exporters.ShapeExporterBase;
 import com.jpexs.decompiler.flash.exporters.modes.BinaryDataExportMode;
 import com.jpexs.decompiler.flash.exporters.modes.FontExportMode;
 import com.jpexs.decompiler.flash.exporters.modes.FramesExportMode;
@@ -121,10 +120,8 @@ import com.jpexs.decompiler.flash.treenodes.TagNode;
 import com.jpexs.decompiler.flash.treenodes.TreeNode;
 import com.jpexs.decompiler.flash.types.CXFORMWITHALPHA;
 import com.jpexs.decompiler.flash.types.ColorTransform;
-import com.jpexs.decompiler.flash.types.GRADRECORD;
 import com.jpexs.decompiler.flash.types.MATRIX;
 import com.jpexs.decompiler.flash.types.RECT;
-import com.jpexs.decompiler.flash.types.RGB;
 import com.jpexs.decompiler.flash.types.SHAPE;
 import com.jpexs.decompiler.flash.types.filters.BlendComposite;
 import com.jpexs.decompiler.flash.types.filters.FILTER;
@@ -319,8 +316,7 @@ public final class SWF implements TreeItem, Timelined {
     public void resetTimeline() {
         timeline = null;
     }
-    
-    
+
     /**
      * Gets all tags with specified id
      *
@@ -609,7 +605,7 @@ public final class SWF implements TreeItem, Timelined {
         createTagMap(tagMap, tagPositionsInFrames, tags);
         addInnerTagsForShowFrameTags(tagPositionsInFrames, tagMap, tags);
     }
-    
+
     private void createTagMap(Map<Long, Tag> tagMap, Map<Long, List<Long>> tagPositionsInFrames, List<Tag> tags) {
         List<Long> tagPositionsInFrame = new ArrayList<>();
         for (Tag tag : tags) {
@@ -621,13 +617,13 @@ public final class SWF implements TreeItem, Timelined {
                 tagPositionsInFrames.put(pos, tagPositionsInFrame);
                 tagPositionsInFrame = new ArrayList<>();
             }
-            
+
             if (tag instanceof DefineSpriteTag) {
                 createTagMap(tagMap, tagPositionsInFrames, tag.getSubTags());
             }
         }
     }
-    
+
     private void addInnerTagsForShowFrameTags(Map<Long, List<Long>> tagPositionsInFrames, Map<Long, Tag> tagMap, List<Tag> tags) {
         for (Tag tag : tags) {
             if (tag instanceof ShowFrameTag) {
@@ -645,7 +641,7 @@ public final class SWF implements TreeItem, Timelined {
             }
         }
     }
-    
+
     @Override
     public SWF getSwf() {
         return this;
@@ -848,8 +844,8 @@ public final class SWF implements TreeItem, Timelined {
             ScriptPack scr = abc.findScriptPackByPath(className);
             if (scr != null) {
                 String cnt = "";
-                if (abc.script_info.length > 1) {
-                    cnt = "script " + (i + 1) + "/" + abc.script_info.length + " ";
+                if (abc.script_info.size() > 1) {
+                    cnt = "script " + (i + 1) + "/" + abc.script_info.size() + " ";
                 }
                 String exStr = "Exporting " + "tag " + (i + 1) + "/" + abcTags.size() + " " + cnt + scr.getPath() + " ...";
                 informListeners("exporting", exStr);
@@ -1271,12 +1267,11 @@ public final class SWF implements TreeItem, Timelined {
         exportSound(baos, t, mode);
         return baos.toByteArray();
     }
-    
-    
+
     public void exportFonts(AbortRetryIgnoreHandler handler, String outdir, FontExportMode mode) throws IOException {
         exportFonts(handler, outdir, tags, mode);
     }
-    
+
     public List<File> exportFonts(AbortRetryIgnoreHandler handler, String outdir, List<Tag> tags, final FontExportMode mode) throws IOException {
         List<File> ret = new ArrayList<>();
         if (tags.isEmpty()) {
@@ -1292,7 +1287,7 @@ public final class SWF implements TreeItem, Timelined {
         }
         for (Tag t : tags) {
             File newfile = null;
-            if (t instanceof FontTag) {                
+            if (t instanceof FontTag) {
                 final FontTag st = (FontTag) t;
                 final File file = new File(outdir + File.separator + st.getCharacterExportFileName() + ".ttf");
                 newfile = file;
@@ -1310,95 +1305,93 @@ public final class SWF implements TreeItem, Timelined {
         }
         return ret;
     }
-    
+
     public void exportFont(final FontTag t, FontExportMode mode, File file) throws IOException {
-        List<SHAPE> shapes=t.getGlyphShapeTable();
-        Fontastic f = new Fontastic(t.getFontName(),file);
-        String cop=t.getCopyright();
-        
-        f.getEngine().setCopyrightYear(cop==null?"":cop);
+        List<SHAPE> shapes = t.getGlyphShapeTable();
+        Fontastic f = new Fontastic(t.getFontName(), file);
+        String cop = t.getCopyright();
+
+        f.getEngine().setCopyrightYear(cop == null ? "" : cop);
         f.setAuthor(ApplicationInfo.shortApplicationVerName);
         f.setVersion("1.0");
-        f.setAscender(t.getAscent()/t.getDivider());
-        f.setDescender(t.getDescent()/t.getDivider());     
+        f.setAscender(t.getAscent() / t.getDivider());
+        f.setDescender(t.getDescent() / t.getDivider());
         //f.set
-        
-        
-        for(int i=0;i<shapes.size();i++){            
-            SHAPE s=shapes.get(i);
-            final List<FPoint[]> contours=new ArrayList<>();
-            PathExporter seb=new PathExporter(s,new ColorTransform()){
 
-                private double transformX(double x){
-                    return Math.ceil((double)(x/t.getDivider()));
+        for (int i = 0; i < shapes.size(); i++) {
+            SHAPE s = shapes.get(i);
+            final List<FPoint[]> contours = new ArrayList<>();
+            PathExporter seb = new PathExporter(s, new ColorTransform()) {
+
+                private double transformX(double x) {
+                    return Math.ceil((double) (x / t.getDivider()));
                 }
-                
-                private double transformY(double y){
-                    return -Math.ceil((double)(y/t.getDivider()));
+
+                private double transformY(double y) {
+                    return -Math.ceil((double) (y / t.getDivider()));
                 }
-                
-                List<FPoint> path=new ArrayList<>();
-                private double lastX=0;
-                private double lastY=0;
-                
+
+                List<FPoint> path = new ArrayList<>();
+                private double lastX = 0;
+                private double lastY = 0;
+
                 @Override
                 protected void finalizePath() {
-                    FPoint[] points=path.toArray(new FPoint[path.size()]);
-                    if(points.length>0){
+                    FPoint[] points = path.toArray(new FPoint[path.size()]);
+                    if (points.length > 0) {
                         contours.add(points);
                     }
                     path.clear();
                 }
 
                 @Override
-                public void moveTo(double x, double y) {       
+                public void moveTo(double x, double y) {
                     finalizePath();
                     lastX = x;
                     lastY = y;
-                    path.add(new FPoint(new PVector(transformX(x),transformY(y))));
-                }                
-                
+                    path.add(new FPoint(new PVector(transformX(x), transformY(y))));
+                }
+
                 @Override
                 public void lineTo(double x, double y) {
                     lastX = x;
                     lastY = y;
-                    path.add(new FPoint(new PVector(transformX(x),transformY(y))));
+                    path.add(new FPoint(new PVector(transformX(x), transformY(y))));
                 }
 
                 @Override
                 public void curveTo(double controlX, double controlY, double anchorX, double anchorY) {
                     lastX = anchorX;
-                    lastY = anchorY;      
+                    lastY = anchorY;
                     path.add(new FPoint(
-                            new PVector(transformX(anchorX),transformY(anchorY)),
-                            new PVector(transformX(controlX),transformY(controlY))
+                            new PVector(transformX(anchorX), transformY(anchorY)),
+                            new PVector(transformX(controlX), transformY(controlY))
                     ));
-                    
-                           
-                }                                                                                
+
+                }
             };
             seb.export();
-            char c=t.glyphToChar(i);
-            if(contours.isEmpty()){
+            char c = t.glyphToChar(i);
+            if (contours.isEmpty()) {
                 continue;
             }
-            if(c=='.'){
+            if (c == '.') {
                 continue;
             }
-            final FGlyph g=f.addGlyph(c);
-            double adv=t.getGlyphAdvance(i);
-            if(adv!=-1){
-                g.setAdvanceWidth((int)adv);
-            }else{
-                g.setAdvanceWidth(t.getGlyphWidth(i)/t.getDivider()+100);
+            final FGlyph g = f.addGlyph(c);
+            double adv = t.getGlyphAdvance(i);
+            if (adv != -1) {
+                g.setAdvanceWidth((int) adv);
+            } else {
+                g.setAdvanceWidth(t.getGlyphWidth(i) / t.getDivider() + 100);
             }
-            for(FPoint[] cnt:contours){
-                if(cnt.length==0){
+            for (FPoint[] cnt : contours) {
+                if (cnt.length == 0) {
                     continue;
                 }
                 g.addContour(cnt);
             }
-        
+
         }
         f.buildFont();
     }

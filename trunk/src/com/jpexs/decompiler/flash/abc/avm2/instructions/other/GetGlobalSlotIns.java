@@ -39,7 +39,7 @@ public class GetGlobalSlotIns extends InstructionDefinition {
     }
 
     @Override
-    public void translate(boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, java.util.Stack<GraphTargetItem> scopeStack, ConstantPool constants, AVM2Instruction ins, MethodInfo[] method_info, List<GraphTargetItem> output, MethodBody body, ABC abc, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, String path, HashMap<Integer, Integer> localRegsAssignmentIps, int ip, HashMap<Integer, List<Integer>> refs, AVM2Code code) {
+    public void translate(boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, java.util.Stack<GraphTargetItem> scopeStack, ConstantPool constants, AVM2Instruction ins, List<MethodInfo> method_info, List<GraphTargetItem> output, MethodBody body, ABC abc, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, String path, HashMap<Integer, Integer> localRegsAssignmentIps, int ip, HashMap<Integer, List<Integer>> refs, AVM2Code code) {
         int slotIndex = ins.operands[0];
         GraphTargetItem obj = (GraphTargetItem) scopeStack.get(0); //scope
         Multiname slotname = null;
@@ -47,10 +47,10 @@ public class GetGlobalSlotIns extends InstructionDefinition {
             slotname = constants.getMultiname(((ExceptionAVM2Item) obj).exception.name_index);
         } else {
 
-            for (int t = 0; t < body.traits.traits.length; t++) {
-                if (body.traits.traits[t] instanceof TraitSlotConst) {
-                    if (((TraitSlotConst) body.traits.traits[t]).slot_id == slotIndex) {
-                        slotname = body.traits.traits[t].getName(abc);
+            for (int t = 0; t < body.traits.traits.size(); t++) {
+                if (body.traits.traits.get(t) instanceof TraitSlotConst) {
+                    if (((TraitSlotConst) body.traits.traits.get(t)).slot_id == slotIndex) {
+                        slotname = body.traits.traits.get(t).getName(abc);
                     }
                 }
 

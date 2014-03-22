@@ -55,7 +55,7 @@ public class SetSlotIns extends InstructionDefinition implements SetTypeIns {
     }
 
     @Override
-    public void translate(boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, java.util.Stack<GraphTargetItem> scopeStack, ConstantPool constants, AVM2Instruction ins, MethodInfo[] method_info, List<GraphTargetItem> output, MethodBody body, ABC abc, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, String path, HashMap<Integer, Integer> localRegsAssignmentIps, int ip, HashMap<Integer, List<Integer>> refs, AVM2Code code) {
+    public void translate(boolean isStatic, int scriptIndex, int classIndex, java.util.HashMap<Integer, GraphTargetItem> localRegs, Stack<GraphTargetItem> stack, java.util.Stack<GraphTargetItem> scopeStack, ConstantPool constants, AVM2Instruction ins, List<MethodInfo> method_info, List<GraphTargetItem> output, MethodBody body, ABC abc, HashMap<Integer, String> localRegNames, List<String> fullyQualifiedNames, String path, HashMap<Integer, Integer> localRegsAssignmentIps, int ip, HashMap<Integer, List<Integer>> refs, AVM2Code code) {
         int slotIndex = ins.operands[0];
         GraphTargetItem value = (GraphTargetItem) stack.pop();
         GraphTargetItem obj = (GraphTargetItem) stack.pop(); //scopeId
@@ -73,8 +73,8 @@ public class SetSlotIns extends InstructionDefinition implements SetTypeIns {
         } else if (obj instanceof ThisAVM2Item) {
             slotname = ((ThisAVM2Item) obj).className;
         } else if (obj instanceof ScriptAVM2Item) {
-            for (int t = 0; t < abc.script_info[((ScriptAVM2Item) obj).scriptIndex].traits.traits.length; t++) {
-                Trait tr = abc.script_info[((ScriptAVM2Item) obj).scriptIndex].traits.traits[t];
+            for (int t = 0; t < abc.script_info.get(((ScriptAVM2Item) obj).scriptIndex).traits.traits.size(); t++) {
+                Trait tr = abc.script_info.get(((ScriptAVM2Item) obj).scriptIndex).traits.traits.get(t);
                 if (tr instanceof TraitWithSlot) {
                     if (((TraitWithSlot) tr).getSlotIndex() == slotIndex) {
                         slotname = tr.getName(abc);
@@ -83,10 +83,10 @@ public class SetSlotIns extends InstructionDefinition implements SetTypeIns {
             }
         } else if (obj instanceof NewActivationAVM2Item) {
 
-            for (int t = 0; t < body.traits.traits.length; t++) {
-                if (body.traits.traits[t] instanceof TraitWithSlot) {
-                    if (((TraitWithSlot) body.traits.traits[t]).getSlotIndex() == slotIndex) {
-                        slotname = body.traits.traits[t].getName(abc);
+            for (int t = 0; t < body.traits.traits.size(); t++) {
+                if (body.traits.traits.get(t) instanceof TraitWithSlot) {
+                    if (((TraitWithSlot) body.traits.traits.get(t)).getSlotIndex() == slotIndex) {
+                        slotname = body.traits.traits.get(t).getName(abc);
                     }
                 }
 
@@ -163,10 +163,10 @@ public class SetSlotIns extends InstructionDefinition implements SetTypeIns {
         int slotIndex = ins.operands[0];
         ////String obj = stack.get(1);
         String slotname = "";
-        for (int t = 0; t < body.traits.traits.length; t++) {
-            if (body.traits.traits[t] instanceof TraitSlotConst) {
-                if (((TraitSlotConst) body.traits.traits[t]).slot_id == slotIndex) {
-                    slotname = body.traits.traits[t].getName(abc).getName(abc.constants, fullyQualifiedNames);
+        for (int t = 0; t < body.traits.traits.size(); t++) {
+            if (body.traits.traits.get(t) instanceof TraitSlotConst) {
+                if (((TraitSlotConst) body.traits.traits.get(t)).slot_id == slotIndex) {
+                    slotname = body.traits.traits.get(t).getName(abc).getName(abc.constants, fullyQualifiedNames);
                 }
             }
 

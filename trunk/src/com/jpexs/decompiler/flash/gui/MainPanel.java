@@ -1545,7 +1545,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
 
                             FrameNodeItem fni = (FrameNodeItem) d.getItem();
                             Tag par = fni.getParent();
-                            int frame = fni.getFrame()-1; //Fix to zero based
+                            int frame = fni.getFrame() - 1; //Fix to zero based
                             int parentId = 0;
                             if (par != null) {
                                 parentId = ((CharacterTag) par).getCharacterId();
@@ -1579,7 +1579,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                 ret.addAll(swf.exportSounds(handler, selFile + File.separator + "sounds", sounds, export.getValue(SoundExportMode.class)));
                 ret.addAll(SWF.exportBinaryData(handler, selFile + File.separator + "binaryData", binaryData, export.getValue(BinaryDataExportMode.class)));
                 ret.addAll(swf.exportFonts(handler, selFile + File.separator + "fonts", fonts, export.getValue(FontExportMode.class)));
-                
+
                 for (Entry<Integer, List<Integer>> entry : frames.entrySet()) {
                     ret.addAll(swf.exportFrames(handler, selFile + File.separator + "frames", entry.getKey(), entry.getValue(), export.getValue(FramesExportMode.class)));
                 }
@@ -1634,7 +1634,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
 
         return treeNode.getItem().getSwf();
     }
-    
+
     private void clearCache() {
         if (abcPanel != null) {
             abcPanel.decompiledTextArea.clearScriptCache();
@@ -2037,7 +2037,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                     } else {
                         int bi = abcPanel.detailPanel.methodTraitPanel.methodCodePanel.getBodyIndex();
                         if (bi != -1) {
-                            abcPanel.abc.bodies[bi].restoreControlFlow(abcPanel.abc.constants, abcPanel.decompiledTextArea.getCurrentTrait(), abcPanel.abc.method_info[abcPanel.abc.bodies[bi].method_info]);
+                            abcPanel.abc.bodies.get(bi).restoreControlFlow(abcPanel.abc.constants, abcPanel.decompiledTextArea.getCurrentTrait(), abcPanel.abc.method_info.get(abcPanel.abc.bodies.get(bi).method_info));
                         }
                         abcPanel.detailPanel.methodTraitPanel.methodCodePanel.setBodyIndex(bi, abcPanel.abc, abcPanel.decompiledTextArea.getCurrentTrait());
                     }
@@ -2131,12 +2131,12 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                             Trait t = abcPanel.decompiledTextArea.getCurrentTrait();
                             if (bi != -1) {
                                 if (deobfuscationDialog.codeProcessingLevel.getValue() == DeobfuscationDialog.LEVEL_REMOVE_DEAD_CODE) {
-                                    abcPanel.abc.bodies[bi].removeDeadCode(abcPanel.abc.constants, t, abcPanel.abc.method_info[abcPanel.abc.bodies[bi].method_info]);
+                                    abcPanel.abc.bodies.get(bi).removeDeadCode(abcPanel.abc.constants, t, abcPanel.abc.method_info.get(abcPanel.abc.bodies.get(bi).method_info));
                                 } else if (deobfuscationDialog.codeProcessingLevel.getValue() == DeobfuscationDialog.LEVEL_REMOVE_TRAPS) {
-                                    abcPanel.abc.bodies[bi].removeTraps(abcPanel.abc.constants, abcPanel.abc, t, abcPanel.decompiledTextArea.getScriptLeaf().scriptIndex, abcPanel.decompiledTextArea.getClassIndex(), abcPanel.decompiledTextArea.getIsStatic(), ""/*FIXME*/);
+                                    abcPanel.abc.bodies.get(bi).removeTraps(abcPanel.abc.constants, abcPanel.abc, t, abcPanel.decompiledTextArea.getScriptLeaf().scriptIndex, abcPanel.decompiledTextArea.getClassIndex(), abcPanel.decompiledTextArea.getIsStatic(), ""/*FIXME*/);
                                 } else if (deobfuscationDialog.codeProcessingLevel.getValue() == DeobfuscationDialog.LEVEL_RESTORE_CONTROL_FLOW) {
-                                    abcPanel.abc.bodies[bi].removeTraps(abcPanel.abc.constants, abcPanel.abc, t, abcPanel.decompiledTextArea.getScriptLeaf().scriptIndex, abcPanel.decompiledTextArea.getClassIndex(), abcPanel.decompiledTextArea.getIsStatic(), ""/*FIXME*/);
-                                    abcPanel.abc.bodies[bi].restoreControlFlow(abcPanel.abc.constants, t, abcPanel.abc.method_info[abcPanel.abc.bodies[bi].method_info]);
+                                    abcPanel.abc.bodies.get(bi).removeTraps(abcPanel.abc.constants, abcPanel.abc, t, abcPanel.decompiledTextArea.getScriptLeaf().scriptIndex, abcPanel.decompiledTextArea.getClassIndex(), abcPanel.decompiledTextArea.getIsStatic(), ""/*FIXME*/);
+                                    abcPanel.abc.bodies.get(bi).restoreControlFlow(abcPanel.abc.constants, t, abcPanel.abc.method_info.get(abcPanel.abc.bodies.get(bi).method_info));
                                 }
                             }
                             abcPanel.detailPanel.methodTraitPanel.methodCodePanel.setBodyIndex(bi, abcPanel.abc, t);
@@ -2585,7 +2585,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                     @Override
                     protected Void doInBackground() throws Exception {
                         int classIndex = -1;
-                        for (Trait t : scriptLeaf.abc.script_info[scriptLeaf.scriptIndex].traits.traits) {
+                        for (Trait t : scriptLeaf.abc.script_info.get(scriptLeaf.scriptIndex).traits.traits) {
                             if (t instanceof TraitClass) {
                                 classIndex = ((TraitClass) t).class_info;
                                 break;
@@ -2849,12 +2849,12 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                         if (frameCnt > fn.getFrame()) {
                             break;
                         }
-                        
+
                         if (item instanceof DoActionTag || item instanceof DoInitActionTag) {
                             // todo: Maybe DoABC tags should be removed, too
                             continue;
                         }
-                        
+
                         Tag t = (Tag) item;
                         Set<Integer> needed = t.getDeepNeededCharacters(swf.characters);
                         for (int n : needed) {
@@ -3316,7 +3316,7 @@ public final class MainPanel extends JPanel implements ActionListener, TreeSelec
                 tf.setVisible(true);
                 return;
             }
-            
+
             TimelineFrame tf = new TimelineFrame(swf);
             tf.setVisible(true);
         }
